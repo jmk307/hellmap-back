@@ -8,6 +8,7 @@ public record ValidateMemberDto(
         boolean isValid,
         Social provider,
         String providerId,
+        String nickname,
         String accessToken
 ) {
     public static ValidateMemberDto of(Social provider, String providerId) {
@@ -19,11 +20,12 @@ public record ValidateMemberDto(
                 .build();
     }
 
-    public static ValidateMemberDto of(Social provider, String providerId, String accessToken) {
+    public static ValidateMemberDto of(Social provider, String nickname, String accessToken) {
         return ValidateMemberDto.builder()
                 .isValid(true)
                 .provider(provider)
                 .providerId("")
+                .nickname(nickname)
                 .accessToken(accessToken)
                 .build();
     }

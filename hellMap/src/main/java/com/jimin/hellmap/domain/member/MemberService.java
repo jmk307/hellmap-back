@@ -45,7 +45,7 @@ public class MemberService {
             return ValidateMemberDto.of(social, providerId);
         } else {
             String accessToken = tokenProvider.generateAccessToken(providerId);
-            return ValidateMemberDto.of(social, providerId, accessToken);
+            return ValidateMemberDto.of(social, member.get().getNickname(), accessToken);
         }
     }
 

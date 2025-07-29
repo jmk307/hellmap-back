@@ -6,6 +6,7 @@ import com.jimin.hellmap.domain.report.entity.Report;
 import lombok.RequiredArgsConstructor;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Duration;
 import java.time.LocalDateTime;
@@ -39,6 +40,7 @@ public class HotScoreCalculator {
     }
 
     @Scheduled(cron = "0 0 */3 * * *", zone = "Asia/Seoul") // 3시간마다 실행
+    @Transactional
     public void updateHotStatus() {
         LocalDateTime cutoffTime = LocalDateTime.now().minus(HOT_DURATION);
 

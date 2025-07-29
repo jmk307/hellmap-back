@@ -19,9 +19,8 @@ public record ReportRequestDto(
         @NotBlank(message = "주소를 입력해주세요")
         String address,  // 전체 주소
 
-        @NotNull(message = "지역 정보를 입력해주세요")
-        @NotBlank(message = "지역 정보를 입력해주세요")
-        String region,   // 행정구역 정보
+        @NotNull(message = "행정구역 코드를 입력해주세요")
+        Long regionCode,   // 행정구역 코드
 
         @NotNull(message = "위도를 입력해주세요")
         @DecimalMin(value = "33", message = "올바른 위도를 입력해주세요")

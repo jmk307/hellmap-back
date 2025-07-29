@@ -32,7 +32,6 @@ public class ReportApiController {
             @Parameter(hidden = true) @LoginUser Member member,
             @Valid @RequestPart ReportRequestDto reportRequestDto,
             @RequestPart (value = "imageFile", required = false) MultipartFile imageFile) {
-        System.out.println(member.getMemberId());
         return ResponseEntity.ok(CommonApiResponse.of(reportService.makeReport(member, reportRequestDto, imageFile)));
     }
 
@@ -68,5 +67,11 @@ public class ReportApiController {
             @Parameter(hidden = true) @LoginUser Member member,
             @PathVariable Long reportId) {
         return ResponseEntity.ok(CommonApiResponse.of(reportService.reportLike(member, reportId)));
+    }
+
+    @PatchMapping("summary")
+    @Operation(summary = "제보 요약하기")
+    public ResponseEntity<CommonApiResponse<String>> summaryReports() {
+        return ResponseEntity.ok(CommonApiResponse.of(reportService.summaryReports()));
     }
 }

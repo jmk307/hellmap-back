@@ -50,7 +50,9 @@ public class Report extends BaseTimeEntity {
     private List<ReportMember> reportMembers;
 
     @Builder
-    public Report(String title, String content, String address, Double latitude, Double longitude, String imageUrl, ReportType reportType, boolean isHot, boolean isActive, Member member) {
+    public Report(String title, String content, String address,
+                  Double latitude, Double longitude, String imageUrl,
+                  ReportType reportType, boolean isHot, boolean isActive, Member member, ReportRegion reportRegion) {
         this.title = title;
         this.content = content;
         this.address = address;
@@ -61,6 +63,7 @@ public class Report extends BaseTimeEntity {
         this.isHot = isHot;
         this.isActive = isActive;
         this.member = member;
+        this.reportRegion = reportRegion;
     }
 
     public void update(String title, String content, String address, Double latitude, Double longitude, String imageUrl, ReportType reportType) {

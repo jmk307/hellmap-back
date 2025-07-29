@@ -5,9 +5,11 @@ import com.jimin.hellmap.domain.report.dto.ReportRequestDto;
 import com.jimin.hellmap.domain.report.dto.ReportResponseDto;
 import com.jimin.hellmap.domain.report.dto.ReportUpdateRequestDto;
 import com.jimin.hellmap.domain.report.entity.Report;
+import com.jimin.hellmap.domain.report.entity.ReportRegion;
 import com.jimin.hellmap.domain.report.entity.relation.ReportMember;
 import com.jimin.hellmap.domain.report.model.ReportType;
 import com.jimin.hellmap.domain.report.repository.ReportMemberRepository;
+import com.jimin.hellmap.domain.report.repository.ReportRegionRepository;
 import com.jimin.hellmap.domain.report.repository.ReportRepository;
 import com.jimin.hellmap.global.config.s3.AwsS3ServiceImpl;
 import com.jimin.hellmap.global.error.ErrorCode;
@@ -18,14 +20,17 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
 public class ReportService {
     private final ReportRepository reportRepository;
     private final ReportMemberRepository reportMemberRepository;
+    private final ReportRegionRepository reportRegionRepository;
     private final AwsS3ServiceImpl awsS3Service;
 
     // 제보 등록
@@ -34,6 +39,7 @@ public class ReportService {
         String imageUrl = (imageFile != null && !imageFile.isEmpty())
                 ? awsS3Service.uploadImage(imageFile, "report")
                 : null;
+        ReportRegion reportRegion = reportRegionRepository.findByRegionCode(reportRequestDto.regionCode());
 
         Report report = Report.builder()
                 .title(reportRequestDto.title())
@@ -46,6 +52,7 @@ public class ReportService {
                 .isHot(false)
                 .isActive(true)
                 .member(member)
+                .reportRegion(reportRegion)
                 .build();
         reportRepository.save(report);
 
@@ -136,7 +143,30 @@ public class ReportService {
 
     // 제보 요약
     @Transactional
-    public void summaryReports() {
+    public String summaryReports() {
+        List<ReportRegion> reportRegions = reportRegionRepository.findAll();
 
+        for (ReportRegion reportRegion : reportRegions) {
+            List<Report> reports = reportRepository.findAllByReportRegionAndIsActiveTrue(reportRegion);
+
+            if (reports.size() >= 3) {
+                List<ReportResponseDto> reportsOrderByLikes = reports.stream()
+                        .map(report -> ReportResponseDto.of(report,
+                                reportMemberRepository.countAllByReport(report), false))
+                        .sorted(Comparator.comparing(ReportResponseDto::likes).reversed())
+                        .limit(3)
+                        .toList();
+
+                String combinedContent = reportsOrderByLikes.stream()
+                        .map(ReportResponseDto::content)
+                        .collect(Collectors.joining(" "));
+
+                if (!combinedContent.equals(reportRegion.getSummaryText())) {
+                    reportRegion.updateSummary(combinedContent);
+                }
+            }
+        }
+
+        return "제보 요약이 완료되었습니다.";
     }
 }

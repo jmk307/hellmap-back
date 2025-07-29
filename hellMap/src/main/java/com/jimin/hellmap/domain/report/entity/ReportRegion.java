@@ -27,18 +27,27 @@ public class ReportRegion extends BaseTimeEntity {
     @Column(length = 1000)
     private String summaryText;
 
+    @Column(length = 1000)
+    private String imagePromptText;
+
+    @Column(length = 1000)
     private String summaryImageUrl;
 
     @OneToMany(mappedBy = "reportRegion", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     private List<Report> regionReports;
 
     @Builder
-    public ReportRegion(Long regionCode, String regionName, Double latitude, Double longitude, String summaryText, String summaryImageUrl) {
+    public ReportRegion(Long regionCode, String regionName, Double latitude, Double longitude, String summaryText, String imagePromptText, String summaryImageUrl) {
         this.regionCode = regionCode;
         this.regionName = regionName;
         this.latitude = latitude;
         this.longitude = longitude;
         this.summaryText = summaryText;
         this.summaryImageUrl = summaryImageUrl;
+    }
+
+    public void updateSummary(String summaryText) {
+        this.summaryText = summaryText;
+        this.imagePromptText = null;
     }
 }

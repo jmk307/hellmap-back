@@ -1,1 +1,1 @@
-web: appstart
+web: java -jar build/libs/hellMap-0.0.1-SNAPSHOT.jar

@@ -1,1 +1,1 @@
-web: java -jar build/libs/hellMap-0.0.1-SNAPSHOT.jar
+web: java -jar build/libs/hellMap-back-0.0.1-SNAPSHOT.jar

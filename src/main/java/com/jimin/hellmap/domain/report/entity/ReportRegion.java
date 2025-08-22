@@ -24,7 +24,7 @@ public class ReportRegion extends BaseTimeEntity {
 
     private Double longitude;
 
-    @Column(length = 1000)
+    @Column(length = 10000)
     private String summaryText;
 
     @Column(length = 1000)

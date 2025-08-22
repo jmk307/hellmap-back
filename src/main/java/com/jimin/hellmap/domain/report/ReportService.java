@@ -1,5 +1,6 @@
 package com.jimin.hellmap.domain.report;
 
+import com.jimin.hellmap.domain.member.MemberRepository;
 import com.jimin.hellmap.domain.member.entity.Member;
 import com.jimin.hellmap.domain.report.dto.ReportRegionResponseDto;
 import com.jimin.hellmap.domain.report.dto.ReportRequestDto;
@@ -16,19 +17,27 @@ import com.jimin.hellmap.global.config.s3.AwsS3ServiceImpl;
 import com.jimin.hellmap.global.error.ErrorCode;
 import com.jimin.hellmap.global.error.exception.ForbiddenException;
 import com.jimin.hellmap.global.error.exception.NotFoundException;
+import io.netty.channel.ChannelOption;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatusCode;
+import org.springframework.http.client.reactive.ReactorClientHttpConnector;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.util.UriComponentsBuilder;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
+import reactor.netty.http.client.HttpClient;
 
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
+import java.time.Duration;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.stream.Collectors;
 
 @Service
@@ -38,7 +47,33 @@ public class ReportService {
     private final ReportMemberRepository reportMemberRepository;
     private final ReportRegionRepository reportRegionRepository;
     private final AwsS3ServiceImpl awsS3Service;
+    private final MemberRepository memberRepository;
     private final WebClient webClient;
+
+    // Mock 데이터 제보 등록
+    @Transactional
+    public void makeMockReports(List<ReportRequestDto> reportRequestDtos) {
+        Member member = memberRepository.findById(1L)
+                .orElseThrow(() -> new NotFoundException(ErrorCode.MEMBER_NOT_FOUND));
+
+        for (ReportRequestDto reportRequestDto : reportRequestDtos) {
+            ReportRegion reportRegion = reportRegionRepository.findByRegionCode(reportRequestDto.regionCode());
+
+            Report report = Report.builder()
+                    .title(reportRequestDto.title())
+                    .content(reportRequestDto.content())
+                    .address(reportRequestDto.address())
+                    .latitude(reportRequestDto.latitude())
+                    .longitude(reportRequestDto.longitude())
+                    .reportType(ReportType.from(reportRequestDto.emotion()))
+                    .isHot(false)
+                    .isActive(true)
+                    .member(member)
+                    .reportRegion(reportRegion)
+                    .build();
+            reportRepository.save(report);
+        }
+    }
 
     // 제보 등록
     @Transactional
@@ -190,39 +225,62 @@ public class ReportService {
         return "제보 요약이 완료되었습니다.";
     }
 
+    private WebClient pollinationsClient() {
+        HttpClient httpClient = HttpClient.create()
+                .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, 10_000)
+                .responseTimeout(Duration.ofSeconds(60));
+
+        return WebClient.builder()
+                .baseUrl("https://image.pollinations.ai")
+                .clientConnector(new ReactorClientHttpConnector(httpClient))
+                .build();
+    }
+
     // AI 제보요약 이미지 생성
     @Transactional
     public String generateReportSummaryImage() {
         List<ReportRegion> reportRegions = reportRegionRepository.findAll();
+        WebClient client = pollinationsClient();
 
-        for (ReportRegion reportRegion : reportRegions) {
-            if (reportRegion.getSummaryImageUrl() == null || reportRegion.getSummaryImageUrl().isEmpty()) {
-                String summaryImageUrl = generateImageUrl(reportRegion.getImagePromptText());
+        Flux.fromIterable(reportRegions)
+                .filter(rr -> rr.getSummaryImageUrl() == null || rr.getSummaryImageUrl().isEmpty())
+                .concatMap(rr ->
+                        client.get()
+                                .uri(builder -> builder
+                                        .path("/prompt/{p}")                 // prompt는 path variable
+                                        .queryParam("width", 512)
+                                        .queryParam("height", 512)
+                                        .queryParam("model", "flux")
+                                        .queryParam("seed", ThreadLocalRandom.current().nextInt(10_000))
+                                        .build(rr.getSummaryText()))         // UriBuilder가 인코딩 처리
+                                .retrieve()
+                                .onStatus(HttpStatusCode::isError,
+                                        resp -> resp.createException().flatMap(Mono::error))
+                                .bodyToMono(byte[].class)
+                                .timeout(Duration.ofSeconds(60))
+                                .map(bytes -> {
+                                    // 바이트 -> MultipartFile
+                                    MultipartFile mf = new MockMultipartFile(
+                                            "aiImage", "ai_image.png", "image/png", bytes);
 
-                // 2. WebClient로 이미지 다운로드
-                byte[] imageBytes = WebClient.create()
-                        .get()
-                        .uri(summaryImageUrl)
-                        .retrieve()
-                        .bodyToMono(byte[].class)
-                        .block();
+                                    // 업로드
+                                    String uploadedUrl = awsS3Service.uploadImage(mf, "reportRegion");
 
-                // 3. MultipartFile로 변환
-                MultipartFile multipartFile = new MockMultipartFile(
-                        "aiImage",
-                        "ai_image.png",
-                        "image/png",
-                        imageBytes
-                );
+                                    // 엔티티 업데이트 + 저장(명시 save로 안정화)
+                                    rr.updateSummaryImageUrl(uploadedUrl);
+                                    reportRegionRepository.save(rr);
 
-                // 4. AWS S3에 업로드
-                String uploadedImageUrl = awsS3Service.uploadImage(multipartFile, "reportRegion");
-
-                // 5. 이미지 URL 업데이트
-                reportRegion.updateSummaryImageUrl(uploadedImageUrl);
-                System.out.println(reportRegion.getRegionName() + " 성공!");
-            }
-        }
+                                    System.out.println(rr.getRegionName() + " 성공!");
+                                    return rr;
+                                })
+                                .onErrorResume(e -> {
+                                    System.out.println(rr.getRegionName() + " 실패: " + e.getMessage());
+                                    return Mono.empty(); // 실패한 리전은 건너뛰기
+                                })
+                )
+                // 요청 간 텀: 버스트 완화(랜덤 지연도 OK)
+                .delayElements(Duration.ofMillis(500))
+                .blockLast(); // 모두 끝날 때까지 동기 대기
 
         return "제보 요약 이미지 생성이 완료되었습니다.";
     }

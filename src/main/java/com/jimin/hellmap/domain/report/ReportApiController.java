@@ -27,6 +27,14 @@ import java.util.List;
 public class ReportApiController {
     private final ReportService reportService;
 
+    @PostMapping("mock")
+    @Operation(summary = "mock 제보하기")
+    public ResponseEntity<CommonApiResponse<String>> makeMockReport(
+            @Valid @RequestBody List<ReportRequestDto> reportRequestDto) {
+        reportService.makeMockReports(reportRequestDto);
+        return ResponseEntity.ok(CommonApiResponse.of("성공"));
+    }
+
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @Operation(summary = "제보하기")
     public ResponseEntity<CommonApiResponse<ReportResponseDto>> makeReport(

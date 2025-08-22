@@ -80,6 +80,10 @@ public class SecurityConfig {
                         .requestMatchers("/").permitAll()
                         .requestMatchers(("/auth/success")).permitAll()
 
+                        // 봇 설정파일 스캔 deny
+                        .requestMatchers("/.env", "/**/.env", "/**/*.env").denyAll()
+                        .requestMatchers("/.**").denyAll()  // 숨김 파일 전반 차단
+
                         // 그 외 요청은 모두 인증 필요
                         // TODO: 추후에 권한 설정
                         .anyRequest().permitAll()

@@ -13,5 +13,4 @@ public class HellMapApplication {
     public static void main(String[] args) {
         SpringApplication.run(HellMapApplication.class, args);
     }
-
 }

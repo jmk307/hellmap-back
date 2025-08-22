@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+
+    <!-- 변수 설정 -->
+    <property name="LOG_PATTERN" value="[%d{yyyy-MM-dd HH:mm:ss}:%-3relative][%thread]" />
+    <property name="LOG_PATTERN_CONSOLE" value="${LOG_PATTERN} %highlight(%-5level) %logger{36} - %msg%n" />
+    <property name="LOG_PATTERN_SLACK" value="${LOG_PATTERN} %-5level %logger{36} %msg%n" />
+
+    <springProperty name="SLACK_WEBHOOK_URI" source="logging.slack.webhook-uri"/>
+    <springProperty name="SLACK_CHANNEL" source="logging.slack.channel"/>
+    <springProperty name="SLACK_USERNAME" source="logging.slack.username"/>
+    <springProperty name="SLACK_EMOJI" source="logging.slack.emoji"/>
+
+    <!-- 콘솔 출력 설정 -->
+    <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>${LOG_PATTERN_CONSOLE}</pattern>
+        </encoder>
+    </appender>
+
+    <!-- 슬랙 알림 전송 -->
+    <appender name="SLACK" class="com.github.maricn.logback.SlackAppender">
+        <webhookUri>${SLACK_WEBHOOK_URI}</webhookUri>
+        <channel>#${SLACK_CHANNEL}</channel>
+        <username>${SLACK_USERNAME}</username>
+        <iconEmoji>:${SLACK_EMOJI}:</iconEmoji>
+        <colorCoding>true</colorCoding>
+        <layout class="ch.qos.logback.classic.PatternLayout">
+            <pattern>${LOG_PATTERN_SLACK}</pattern>
+        </layout>
+        <filter class="ch.qos.logback.classic.filter.LevelFilter">
+            <level>ERROR</level>
+            <onMatch>ACCEPT</onMatch>
+            <onMismatch>DENY</onMismatch>
+        </filter>
+    </appender>
+
+    <!-- 로깅 레벨 설정 -->
+    <root level="INFO">
+        <appender-ref ref="STDOUT"/>
+        <appender-ref ref="SLACK"/>
+    </root>
+
+</configuration>

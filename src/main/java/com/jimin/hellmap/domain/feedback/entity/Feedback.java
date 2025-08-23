@@ -33,17 +33,25 @@ public class Feedback extends BaseTimeEntity {
     @Enumerated(EnumType.STRING)
     private Status status;
 
+    @Column(length = 1000)
+    private String review;
+
     @ManyToOne(fetch = FetchType.LAZY)
     private Member member;
 
 
     @Builder
-    public Feedback(FeedbackType feedbackType, String title, String description, Priority priority, Status status, Member member) {
+    public Feedback(FeedbackType feedbackType, String title, String description, Priority priority, Status status, String review, Member member) {
         this.feedbackType = feedbackType;
         this.title = title;
         this.description = description;
         this.priority = priority;
         this.status = status;
+        this.review = review;
         this.member = member;
+    }
+
+    public void updateReview(String review) {
+        this.review = review;
     }
 }

@@ -1,5 +1,6 @@
 package com.jimin.hellmap.global.error;
 
+import com.jimin.hellmap.domain.feedback.entity.Feedback;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import org.springframework.http.HttpStatus;
@@ -73,7 +74,10 @@ public enum ErrorCode {
     REPORT_NOT_FOUND(NOT_FOUND, "R001", "해당 제보를 찾을 수 없습니다"),
 
     /* 공지사항 관련 오류 */
-    NOTICE_NOT_FOUND(NOT_FOUND, "N000", "해당 공지사항을 찾을 수 없습니다");
+    NOTICE_NOT_FOUND(NOT_FOUND, "N000", "해당 공지사항을 찾을 수 없습니다"),
+
+    /* 피드백 관련 오류 */
+    FEEDBACK_NOT_FOUND(NOT_FOUND, "F001", "해당 피드백을 찾을 수 없습니다");
 
     private final HttpStatus httpStatus;
     private final String code;

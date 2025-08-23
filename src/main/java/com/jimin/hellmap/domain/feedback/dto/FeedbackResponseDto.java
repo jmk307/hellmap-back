@@ -19,6 +19,7 @@ public record FeedbackResponseDto(
         String description,
         Priority priority,
         Status status,
+        String review,
         String createdAt,
         String author
 ) {
@@ -35,6 +36,7 @@ public record FeedbackResponseDto(
                 .description(feedback.getDescription())
                 .priority(feedback.getPriority())
                 .status(feedback.getStatus())
+                .review(feedback.getReview())
                 .createdAt(formatted)
                 .author(feedback.getMember().getNickname())
                 .build();

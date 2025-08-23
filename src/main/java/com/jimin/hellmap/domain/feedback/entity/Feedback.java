@@ -51,7 +51,8 @@ public class Feedback extends BaseTimeEntity {
         this.member = member;
     }
 
-    public void updateReview(String review) {
+    public void updateReview(Status status, String review) {
+        this.status = status;
         this.review = review;
     }
 }

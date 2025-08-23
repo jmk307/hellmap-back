@@ -54,7 +54,7 @@ public class FeedbackService {
             throw new NotFoundException(ErrorCode.FORBIDDEN_USER);
         }
 
-        feedback.updateReview(feedbackReviewDto.review());
+        feedback.updateReview(feedbackReviewDto.status(), feedbackReviewDto.review());
 
         return "피드백 리뷰가 성공적으로 업데이트되었습니다.";
     }

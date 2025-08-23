@@ -1,5 +1,6 @@
 package com.jimin.hellmap.domain.member.entity;
 
+import com.jimin.hellmap.domain.feedback.entity.Feedback;
 import com.jimin.hellmap.domain.member.model.Social;
 import com.jimin.hellmap.domain.report.entity.Report;
 import com.jimin.hellmap.global.config.entity.BaseTimeEntity;
@@ -29,11 +30,15 @@ public class Member extends BaseTimeEntity {
     @OneToMany(mappedBy = "member", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     private List<Report> reports = new ArrayList<>();
 
+    @OneToMany(mappedBy = "member", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    private List<Feedback> feedbacks= new ArrayList<>();
+
     @Builder
-    public Member(String nickname, Social provider, String providerId, List<Report> reports) {
+    public Member(String nickname, Social provider, String providerId, List<Report> reports, List<Feedback> feedbacks) {
         this.nickname = nickname;
         this.provider = provider;
         this.providerId = providerId;
         this.reports = reports != null ? reports : new ArrayList<>();
+        this.feedbacks = feedbacks != null ? feedbacks : new ArrayList<>();
     }
 }

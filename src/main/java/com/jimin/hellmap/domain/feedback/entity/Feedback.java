@@ -2,6 +2,8 @@ package com.jimin.hellmap.domain.feedback.entity;
 
 import com.jimin.hellmap.domain.feedback.model.FeedbackType;
 import com.jimin.hellmap.domain.feedback.model.Priority;
+import com.jimin.hellmap.domain.feedback.model.Status;
+import com.jimin.hellmap.domain.member.entity.Member;
 import com.jimin.hellmap.global.config.entity.BaseTimeEntity;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
@@ -28,11 +30,20 @@ public class Feedback extends BaseTimeEntity {
     @Enumerated(EnumType.STRING)
     private Priority priority;
 
+    @Enumerated(EnumType.STRING)
+    private Status status;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    private Member member;
+
+
     @Builder
-    public Feedback(FeedbackType feedbackType, String title, String description, Priority priority) {
+    public Feedback(FeedbackType feedbackType, String title, String description, Priority priority, Status status, Member member) {
         this.feedbackType = feedbackType;
         this.title = title;
         this.description = description;
         this.priority = priority;
+        this.status = status;
+        this.member = member;
     }
 }

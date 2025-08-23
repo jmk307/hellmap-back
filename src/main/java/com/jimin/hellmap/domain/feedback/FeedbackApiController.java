@@ -1,12 +1,15 @@
 package com.jimin.hellmap.domain.feedback;
 
 import com.jimin.hellmap.domain.feedback.dto.FeedbackRequestDto;
+import com.jimin.hellmap.domain.feedback.dto.FeedbackResponseDto;
 import com.jimin.hellmap.global.config.CommonApiResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
@@ -17,8 +20,14 @@ public class FeedbackApiController {
 
     @PostMapping
     @Operation(summary = "피드백 제보하기")
-    public ResponseEntity<CommonApiResponse<String>> checkNickname(
+    public ResponseEntity<CommonApiResponse<String>> makeFeedback(
             @RequestBody FeedbackRequestDto feedbackRequestDto) {
         return ResponseEntity.ok(CommonApiResponse.of(feedbackService.makeFeedback(feedbackRequestDto)));
+    }
+
+    @GetMapping
+    @Operation(summary = "피드백 불러오기")
+    public ResponseEntity<CommonApiResponse<List<FeedbackResponseDto>>> showFeedbacks() {
+        return ResponseEntity.ok(CommonApiResponse.of(feedbackService.showFeedbacks()));
     }
 }
